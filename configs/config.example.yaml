@@ -1,0 +1,33 @@
+server:
+  port: 8080
+  env: development  # development | production
+
+database:
+  host: localhost
+  port: 5432
+  user: productapp
+  password: your_password_here
+  dbname: productsystem
+  sslmode: disable
+  max_open_conns: 100
+  max_idle_conns: 10
+  conn_max_lifetime: 1h
+
+redis:
+  url: redis://localhost:6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: your_jwt_secret_please_change
+  access_expire: 15m
+  refresh_expire: 168h  # 7 days
+
+storage:
+  driver: local  # local | s3
+  s3:
+    endpoint: http://localhost:9000
+    bucket: products
+    access_key: minioadmin
+    secret_key: minioadmin
+    region: us-east-1
