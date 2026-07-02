@@ -31,5 +31,9 @@ Thumbs.db
 tmp/
 *.log
 
+# Go binary artifacts
+server
+cmd/server/server
+
 # Docker
 docker-data/

@@ -3,13 +3,19 @@ package container
 import (
 	"fmt"
 
-	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/cache/redis"
-	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/config"
-	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/log"
-	gormdb "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/persistence/gorm"
+	"github.com/gin-gonic/gin"
 	goRedis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+
+	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/cache/redis"
+	gormdb "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/persistence/gorm"
+	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/config"
+	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/log"
+	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/handler"
+	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/middleware"
+	"github.com/EricStone1900/ecommerce-backend/internal/usecase/auth"
+	"github.com/EricStone1900/ecommerce-backend/pkg/jwt"
 )
 
 // Container holds all initialized dependencies for the application.
@@ -18,13 +24,17 @@ type Container struct {
 	Logger *zap.Logger
 	DB     *gorm.DB
 	Redis  *goRedis.Client
+
+	// Phase 2 — Auth dependencies
+	UserRepo       *gormdb.UserRepository
+	TokenStore     *redis.TokenStore
+	JWTService     *jwt.JWTService
+	AuthUseCase    *auth.AuthUseCase
+	AuthHandler    *handler.AuthHandler
+	AuthMiddleware gin.HandlerFunc
 }
 
-// NewContainer initializes all dependencies in order:
-// 1. Config (Viper)
-// 2. Logger (zap)
-// 3. Database (GORM)
-// 4. Redis
+// NewContainer initializes all dependencies in order.
 func NewContainer(cfgPath string) (*Container, error) {
 	// 1. Load configuration
 	cfg, err := config.LoadConfig(cfgPath)
@@ -52,6 +62,25 @@ func NewContainer(cfgPath string) (*Container, error) {
 		return nil, fmt.Errorf("container: failed to connect to redis: %w", err)
 	}
 
+	// 5. Initialize repositories and services
+	userRepo := gormdb.NewUserRepository(db)
+	tokenStore := redis.NewTokenStore(rdb)
+	jwtService := jwt.NewJWTService(cfg.JWT.Secret, cfg.JWT.AccessExpire, cfg.JWT.RefreshExpire)
+
+	// 6. Initialize use cases
+	authUseCase := auth.NewAuthUseCase(
+		userRepo,
+		tokenStore,
+		jwtService,
+		logger,
+		cfg.JWT.AccessExpire,
+		cfg.JWT.RefreshExpire,
+	)
+
+	// 7. Initialize HTTP layer
+	authHandler := handler.NewAuthHandler(authUseCase)
+	authMiddleware := middleware.AuthMiddleware(jwtService)
+
 	logger.Info("container initialized",
 		zap.String("env", cfg.Server.Env),
 		zap.Int("port", cfg.Server.Port),
@@ -62,6 +91,13 @@ func NewContainer(cfgPath string) (*Container, error) {
 		Logger: logger,
 		DB:     db,
 		Redis:  rdb,
+
+		UserRepo:       userRepo,
+		TokenStore:     tokenStore,
+		JWTService:     jwtService,
+		AuthUseCase:    authUseCase,
+		AuthHandler:    authHandler,
+		AuthMiddleware: authMiddleware,
 	}, nil
 }
 

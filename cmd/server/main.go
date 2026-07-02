@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -19,7 +22,8 @@ func main() {
 		fmt.Println("Usage: server <command>")
 		fmt.Println("Commands:")
 		fmt.Println("  serve    Start the HTTP server")
-		fmt.Println("  migrate  Run database migrations (placeholder)")
+		fmt.Println("  migrate  Run database migrations")
+		fmt.Println("  migrate  --down  Rollback database migrations")
 		os.Exit(1)
 	}
 
@@ -55,6 +59,9 @@ func runServe() {
 	// Setup router
 	r := router.NewRouter(c.Logger)
 
+	// Set auth middleware for protected routes
+	r.SetAuthMiddleware(c.AuthMiddleware)
+
 	// Register health check
 	healthHandler := handler.NewHealthHandler(&handler.HealthDependencies{
 		DB:      c.DB,
@@ -63,6 +70,13 @@ func runServe() {
 		StartAt: time.Now(),
 	})
 	r.Public("GET", "/health", healthHandler)
+
+	// Register auth routes
+	r.Public("POST", "/api/v1/auth/register", c.AuthHandler.Register)
+	r.Public("POST", "/api/v1/auth/login", c.AuthHandler.Login)
+	r.Protected("POST", "/api/v1/auth/logout", c.AuthHandler.Logout)
+	r.Protected("POST", "/api/v1/auth/refresh", c.AuthHandler.Refresh)
+	r.Protected("GET", "/api/v1/auth/me", c.AuthHandler.Me)
 
 	// Start server
 	addr := fmt.Sprintf(":%d", c.Config.Server.Port)
@@ -73,7 +87,103 @@ func runServe() {
 }
 
 func runMigrate() {
-	fmt.Println("Database migration placeholder")
-	fmt.Println("Migrations will be implemented in a future phase")
-	os.Exit(0)
+	cfgPath := configPath
+	if envPath := os.Getenv("APP_CONFIG_PATH"); envPath != "" {
+		cfgPath = envPath
+	}
+
+	c, err := container.NewContainer(cfgPath)
+	if err != nil {
+		fmt.Printf("Failed to initialize container: %v\n", err)
+		os.Exit(1)
+	}
+	defer c.Close()
+
+	isDown := len(os.Args) > 2 && os.Args[2] == "--down"
+
+	migrationsDir := "migrations"
+	entries, err := os.ReadDir(migrationsDir)
+	if err != nil {
+		c.Logger.Fatal("failed to read migrations directory", zap.Error(err))
+	}
+
+	// Filter and sort migration files
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if isDown && strings.HasSuffix(name, ".down.sql") {
+			files = append(files, name)
+		} else if !isDown && strings.HasSuffix(name, ".up.sql") {
+			files = append(files, name)
+		}
+	}
+	sort.Strings(files)
+
+	if isDown {
+		// Reverse order for down migrations
+		sort.Sort(sort.Reverse(sort.StringSlice(files)))
+	}
+
+	if len(files) == 0 {
+		direction := "up"
+		if isDown {
+			direction = "down"
+		}
+		c.Logger.Info("no migration files found", zap.String("direction", direction))
+		return
+	}
+
+	direction := "up"
+	if isDown {
+		direction = "down"
+	}
+	c.Logger.Info("running migrations",
+		zap.String("direction", direction),
+		zap.Int("count", len(files)),
+	)
+
+	for _, file := range files {
+		filePath := filepath.Join(migrationsDir, file)
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			c.Logger.Fatal("failed to read migration file",
+				zap.String("file", file),
+				zap.Error(err),
+			)
+		}
+
+		sql := strings.TrimSpace(string(content))
+		if sql == "" {
+			c.Logger.Info("skipping empty migration file", zap.String("file", file))
+			continue
+		}
+
+		c.Logger.Info("executing migration", zap.String("file", file))
+
+		// Split by semicolons to handle multiple statements
+		statements := strings.Split(sql, ";")
+		for _, stmt := range statements {
+			stmt = strings.TrimSpace(stmt)
+			if stmt == "" {
+				continue
+			}
+			if err := c.DB.Exec(stmt).Error; err != nil {
+				c.Logger.Fatal("migration statement failed",
+					zap.String("file", file),
+					zap.String("statement", stmt[:min(len(stmt), 80)]),
+					zap.Error(err),
+				)
+			}
+		}
+
+		c.Logger.Info("migration applied successfully", zap.String("file", file))
+	}
+
+	c.Logger.Info("all migrations completed successfully",
+		zap.String("direction", direction),
+		zap.Int("count", len(files)),
+	)
 }
