@@ -16,6 +16,7 @@ import (
 	gormdb "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/persistence/gorm"
 	pushstub "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/push/stub"
 	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/storage/local"
+	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/storage/s3"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/handler"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/middleware"
 	"github.com/EricStone1900/ecommerce-backend/internal/usecase/assistant"
@@ -116,8 +117,17 @@ func NewContainer(cfgPath string) (*Container, error) {
 	var storage port.Storage
 	switch cfg.Storage.Driver {
 	case "s3":
-		logger.Warn("S3 storage not yet implemented, falling back to local")
-		fallthrough
+		logger.Info("initializing S3 storage",
+			zap.String("endpoint", cfg.Storage.S3.Endpoint),
+			zap.String("bucket", cfg.Storage.S3.Bucket),
+		)
+		storage = s3.NewStorage(s3.Config{
+			Endpoint:  cfg.Storage.S3.Endpoint,
+			Bucket:    cfg.Storage.S3.Bucket,
+			AccessKey: cfg.Storage.S3.AccessKey,
+			SecretKey: cfg.Storage.S3.SecretKey,
+			Region:    cfg.Storage.S3.Region,
+		}, logger)
 	default:
 		s, err := local.NewStorage(cfg.Storage.Local.BasePath, logger)
 		if err != nil {
