@@ -32,6 +32,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "github.com/EricStone1900/ecommerce-backend/docs"
+
 	"github.com/EricStone1900/ecommerce-backend/internal/container"
 	"github.com/EricStone1900/ecommerce-backend/internal/domain/entity"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/handler"
