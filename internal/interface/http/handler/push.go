@@ -29,6 +29,16 @@ func NewPushHandler(pushUseCase PushUseCase) *PushHandler {
 	return &PushHandler{pushUseCase: pushUseCase}
 }
 
+// @Summary      注册推送 Token
+// @Description  注册设备推送通知 Token
+// @Tags         推送管理
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        request body push.RegisterTokenRequest true "Token 注册请求"
+// @Success      200 {object} response.Response{data=push.RegisterTokenResponse}
+// @Failure      400 {object} response.Response
+// @Router       /api/v1/push/token [post]
 // RegisterToken handles POST /api/v1/push/token (protected, any role)
 func (h *PushHandler) RegisterToken(c *gin.Context) {
 	userID := middleware.GetUserID(c)
@@ -48,6 +58,16 @@ func (h *PushHandler) RegisterToken(c *gin.Context) {
 	c.JSON(200, response.Success(resp))
 }
 
+// @Summary      删除推送 Token
+// @Description  删除设备推送通知 Token
+// @Tags         推送管理
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        request body push.DeleteTokenRequest true "Token 删除请求"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /api/v1/push/token [delete]
 // DeleteToken handles DELETE /api/v1/push/token (protected, any role)
 func (h *PushHandler) DeleteToken(c *gin.Context) {
 	userID := middleware.GetUserID(c)
@@ -66,6 +86,14 @@ func (h *PushHandler) DeleteToken(c *gin.Context) {
 	c.JSON(200, response.Success(nil))
 }
 
+// @Summary      发送测试推送
+// @Description  向当前用户发送一条测试推送通知
+// @Tags         推送管理
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Success      200 {object} response.Response{data=push.SendTestResponse}
+// @Router       /api/v1/push/test [post]
 // SendTest handles POST /api/v1/push/test (protected, any role)
 func (h *PushHandler) SendTest(c *gin.Context) {
 	userID := middleware.GetUserID(c)

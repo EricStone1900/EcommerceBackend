@@ -28,6 +28,18 @@ func NewUploadHandler(uploadUseCase UploadUseCase) *UploadHandler {
 	return &UploadHandler{uploadUseCase: uploadUseCase}
 }
 
+// @Summary      上传文件
+// @Description  上传图片、文档或视频文件，支持 multipart/form-data 格式
+// @Tags         文件管理
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        file formData file true "上传文件"
+// @Param        type formData string true "文件类型（image|document|video）"
+// @Success      201 {object} response.Response{data=upload.UploadResponse}
+// @Failure      400 {object} response.Response
+// @Failure      413 {object} response.Response
+// @Router       /api/v1/upload [post]
 // Upload handles POST /api/v1/upload (protected, any role)
 // Accepts multipart/form-data with "file" (the file) and "type" (image|document|video).
 func (h *UploadHandler) Upload(c *gin.Context) {

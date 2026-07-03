@@ -27,6 +27,13 @@ type HealthResponse struct {
 	Uptime   string `json:"uptime"`
 }
 
+// @Summary      健康检查
+// @Description  检查服务运行状态，包括数据库和 Redis 连接
+// @Tags         系统管理
+// @Produce      json
+// @Success      200 {object} handler.HealthResponse
+// @Failure      503 {object} handler.HealthResponse
+// @Router       /health [get]
 // NewHealthHandler creates a health check handler that pings DB and Redis.
 func NewHealthHandler(deps *HealthDependencies) gin.HandlerFunc {
 	return func(c *gin.Context) {

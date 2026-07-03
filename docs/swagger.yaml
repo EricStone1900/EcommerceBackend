@@ -1,0 +1,703 @@
+basePath: /api/v1
+definitions:
+  github_com_EricStone1900_ecommerce-backend_internal_domain_entity.Role:
+    enum:
+    - admin
+    - member
+    - customer
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleMember
+    - RoleCustomer
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.UserInfo'
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_domain_entity.Role'
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_product.CreateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      status:
+        description: optional, defaults to "on_sale"
+        type: string
+      stock:
+        type: integer
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_product.ProductResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      status:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_product.UpdateProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      status:
+        type: string
+      stock:
+        type: integer
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_push.DeleteTokenRequest:
+    properties:
+      device_token:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_push.RegisterTokenRequest:
+    properties:
+      device_token:
+        type: string
+      platform:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_push.RegisterTokenResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_push.SendTestResponse:
+    properties:
+      sent:
+        type: integer
+    type: object
+  github_com_EricStone1900_ecommerce-backend_internal_usecase_upload.UploadResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      original_name:
+        type: string
+      size:
+        type: integer
+      status:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  github_com_EricStone1900_ecommerce-backend_pkg_response.PaginatedData:
+    properties:
+      list: {}
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  github_com_EricStone1900_ecommerce-backend_pkg_response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  internal_interface_http_handler.HealthResponse:
+    properties:
+      database:
+        type: string
+      redis:
+        type: string
+      status:
+        type: string
+      uptime:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: 电商后台管理系统 API
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: E-Commerce Backend API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 使用邮箱和密码登录，返回 JWT Token
+      parameters:
+      - description: 登录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      summary: 用户登录
+      tags:
+      - 认证管理
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: 使 refresh token 失效，完成登出
+      parameters:
+      - description: 登出请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 用户登出
+      tags:
+      - 认证管理
+  /api/v1/auth/me:
+    get:
+      consumes:
+      - application/json
+      description: 返回当前登录用户的信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.UserInfo'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取当前用户
+      tags:
+      - 认证管理
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 使用 refresh token 获取新的访问令牌
+      parameters:
+      - description: 刷新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 刷新令牌
+      tags:
+      - 认证管理
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 使用邮箱和密码注册新用户
+      parameters:
+      - description: 注册请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_auth.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      summary: 用户注册
+      tags:
+      - 认证管理
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取商品列表，支持按名称、状态筛选和排序
+      parameters:
+      - description: 页码（默认 1）
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数（默认 20）
+        in: query
+        name: page_size
+        type: integer
+      - description: 商品名称（模糊搜索）
+        in: query
+        name: name
+        type: string
+      - description: 商品状态（on_sale|off_sale）
+        in: query
+        name: status
+        type: string
+      - description: 排序字段（created_at|price）
+        in: query
+        name: sort_by
+        type: string
+      - description: 是否降序
+        in: query
+        name: sort_desc
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.PaginatedData'
+                  - properties:
+                      list:
+                        items:
+                          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.ProductResponse'
+                        type: array
+                    type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取商品列表
+      tags:
+      - 商品管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新商品（仅管理员）
+      parameters:
+      - description: 商品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建商品
+      tags:
+      - 商品管理
+  /api/v1/products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 软删除指定商品（仅管理员）
+      parameters:
+      - description: 商品 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除商品
+      tags:
+      - 商品管理
+    get:
+      consumes:
+      - application/json
+      description: 根据商品 ID 获取商品详细信息
+      parameters:
+      - description: 商品 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      summary: 获取商品详情
+      tags:
+      - 商品管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定商品的信息（仅管理员）
+      parameters:
+      - description: 商品 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_product.ProductResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新商品
+      tags:
+      - 商品管理
+  /api/v1/push/test:
+    post:
+      consumes:
+      - application/json
+      description: 向当前用户发送一条测试推送通知
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_push.SendTestResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 发送测试推送
+      tags:
+      - 推送管理
+  /api/v1/push/token:
+    delete:
+      consumes:
+      - application/json
+      description: 删除设备推送通知 Token
+      parameters:
+      - description: Token 删除请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_push.DeleteTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除推送 Token
+      tags:
+      - 推送管理
+    post:
+      consumes:
+      - application/json
+      description: 注册设备推送通知 Token
+      parameters:
+      - description: Token 注册请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_push.RegisterTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_push.RegisterTokenResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 注册推送 Token
+      tags:
+      - 推送管理
+  /api/v1/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传图片、文档或视频文件，支持 multipart/form-data 格式
+      parameters:
+      - description: 上传文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 文件类型（image|document|video）
+        in: formData
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_internal_usecase_upload.UploadResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/github_com_EricStone1900_ecommerce-backend_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 上传文件
+      tags:
+      - 文件管理
+  /health:
+    get:
+      description: 检查服务运行状态，包括数据库和 Redis 连接
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_http_handler.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_interface_http_handler.HealthResponse'
+      summary: 健康检查
+      tags:
+      - 系统管理
+securityDefinitions:
+  ApiKeyAuth:
+    description: Bearer token authentication
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

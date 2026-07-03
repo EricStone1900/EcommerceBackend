@@ -1,3 +1,22 @@
+// @title           E-Commerce Backend API
+// @version         1.0
+// @description     电商后台管理系统 API
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.email  support@example.com
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+// @description Bearer token authentication
+
 package main
 
 import (
@@ -9,6 +28,9 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/EricStone1900/ecommerce-backend/internal/container"
 	"github.com/EricStone1900/ecommerce-backend/internal/domain/entity"
@@ -96,6 +118,12 @@ func runServe() {
 	r.Protected("POST", "/api/v1/push/token", c.PushHandler.RegisterToken)
 	r.Protected("DELETE", "/api/v1/push/token", c.PushHandler.DeleteToken)
 	r.Protected("POST", "/api/v1/push/test", c.PushHandler.SendTest)
+
+	// Swagger UI — only enabled in development mode
+	if c.Config.Server.Env == "development" {
+		r.Engine().GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		c.Logger.Info("swagger UI enabled at /swagger/index.html")
+	}
 
 	// Start server
 	addr := fmt.Sprintf(":%d", c.Config.Server.Port)
