@@ -29,6 +29,9 @@ const (
 	CodeInvalidFileType    = 6002
 	CodeFileNotFound       = 6003
 	CodeFileUploadFailed   = 6004
+	CodePushTokenNotFound  = 7001
+	CodePushSendFailed     = 7002
+	CodeInvalidPlatform    = 7003
 	CodeInternalError      = 5001
 )
 
@@ -47,6 +50,9 @@ var (
 	ErrInvalidFileType    = &Error{Code: CodeInvalidFileType, Message: "invalid file type or extension", HTTPCode: 400}
 	ErrFileNotFound       = &Error{Code: CodeFileNotFound, Message: "file not found", HTTPCode: 404}
 	ErrFileUploadFailed   = &Error{Code: CodeFileUploadFailed, Message: "file upload failed", HTTPCode: 500}
+	ErrPushTokenNotFound  = &Error{Code: CodePushTokenNotFound, Message: "push token not found", HTTPCode: 404}
+	ErrPushSendFailed     = &Error{Code: CodePushSendFailed, Message: "push send failed", HTTPCode: 500}
+	ErrInvalidPlatform    = &Error{Code: CodeInvalidPlatform, Message: "invalid platform, only 'ios' is supported", HTTPCode: 400}
 	ErrInternalError      = &Error{Code: CodeInternalError, Message: "internal server error", HTTPCode: 500}
 )
 

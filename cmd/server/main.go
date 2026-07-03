@@ -92,6 +92,11 @@ func runServe() {
 	// Serve uploaded files statically
 	r.Engine().Static("/uploads", c.Config.Storage.Local.BasePath)
 
+	// Register push notification routes (Phase 5)
+	r.Protected("POST", "/api/v1/push/token", c.PushHandler.RegisterToken)
+	r.Protected("DELETE", "/api/v1/push/token", c.PushHandler.DeleteToken)
+	r.Protected("POST", "/api/v1/push/test", c.PushHandler.SendTest)
+
 	// Start server
 	addr := fmt.Sprintf(":%d", c.Config.Server.Port)
 	c.Logger.Info("listening", zap.String("address", addr))

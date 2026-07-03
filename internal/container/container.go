@@ -14,6 +14,7 @@ import (
 	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/event"
 	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/log"
 	gormdb "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/persistence/gorm"
+	pushstub "github.com/EricStone1900/ecommerce-backend/internal/infrastructure/push/stub"
 	"github.com/EricStone1900/ecommerce-backend/internal/infrastructure/storage/local"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/handler"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/middleware"
@@ -21,6 +22,7 @@ import (
 	"github.com/EricStone1900/ecommerce-backend/internal/usecase/auth"
 	"github.com/EricStone1900/ecommerce-backend/internal/usecase/fileprocessing"
 	"github.com/EricStone1900/ecommerce-backend/internal/usecase/product"
+	"github.com/EricStone1900/ecommerce-backend/internal/usecase/push"
 	"github.com/EricStone1900/ecommerce-backend/internal/usecase/upload"
 	"github.com/EricStone1900/ecommerce-backend/pkg/jwt"
 )
@@ -54,6 +56,12 @@ type Container struct {
 
 	// Phase 4 — Assistant stub
 	Assistant port.AssistantPort
+
+	// Phase 5 — Push notification dependencies
+	PushTokenRepo *gormdb.PushTokenRepository
+	Notifier      port.Notifier
+	PushUseCase   *push.PushUseCase
+	PushHandler   *handler.PushHandler
 }
 
 // NewContainer initializes all dependencies in order.
@@ -127,7 +135,13 @@ func NewContainer(cfgPath string) (*Container, error) {
 	// Phase 4 — Initialize assistant stub
 	ast := assistant.NewMockAssistant(logger)
 
-	// 8. Initialize HTTP layer
+	// 8. Phase 5 — Initialize push notification dependencies
+	pushTokenRepo := gormdb.NewPushTokenRepository(db)
+	notifier := pushstub.NewNotifier(logger)
+	pushUseCase := push.NewPushUseCase(pushTokenRepo, notifier, logger)
+	pushHandler := handler.NewPushHandler(pushUseCase)
+
+	// 9. Initialize HTTP layer
 	authHandler := handler.NewAuthHandler(authUseCase)
 	authMiddleware := middleware.AuthMiddleware(jwtService)
 	productHandler := handler.NewProductHandler(productUseCase)
@@ -162,6 +176,11 @@ func NewContainer(cfgPath string) (*Container, error) {
 		UploadHandler: uploadHandler,
 
 		Assistant: ast,
+
+		PushTokenRepo: pushTokenRepo,
+		Notifier:      notifier,
+		PushUseCase:   pushUseCase,
+		PushHandler:   pushHandler,
 	}, nil
 }
 
