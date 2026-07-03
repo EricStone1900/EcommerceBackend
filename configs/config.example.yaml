@@ -25,6 +25,8 @@ jwt:
 
 storage:
   driver: local  # local | s3
+  local:
+    base_path: ./uploads
   s3:
     endpoint: http://localhost:9000
     bucket: products

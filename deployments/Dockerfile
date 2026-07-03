@@ -24,6 +24,9 @@ COPY --from=builder /build/server .
 COPY --from=builder /build/configs ./configs
 COPY --from=builder /build/migrations ./migrations
 
+# Create uploads directory with write permissions for appuser
+RUN mkdir -p /app/uploads && chown appuser:appuser /app/uploads
+
 USER appuser
 
 EXPOSE 8080

@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/EricStone1900/ecommerce-backend/internal/container"
+	"github.com/EricStone1900/ecommerce-backend/internal/domain/entity"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/handler"
 	"github.com/EricStone1900/ecommerce-backend/internal/interface/http/router"
 )
@@ -77,6 +78,19 @@ func runServe() {
 	r.Protected("POST", "/api/v1/auth/logout", c.AuthHandler.Logout)
 	r.Protected("POST", "/api/v1/auth/refresh", c.AuthHandler.Refresh)
 	r.Protected("GET", "/api/v1/auth/me", c.AuthHandler.Me)
+
+	// Register product routes
+	r.Public("GET", "/api/v1/products/:id", c.ProductHandler.GetDetail)
+	r.Protected("GET", "/api/v1/products", c.ProductHandler.List)
+	r.Protected("POST", "/api/v1/products", c.ProductHandler.Create, entity.RoleAdmin)
+	r.Protected("PUT", "/api/v1/products/:id", c.ProductHandler.Update, entity.RoleAdmin)
+	r.Protected("DELETE", "/api/v1/products/:id", c.ProductHandler.Delete, entity.RoleAdmin)
+
+	// Register upload route (Phase 4)
+	r.Protected("POST", "/api/v1/upload", c.UploadHandler.Upload)
+
+	// Serve uploaded files statically
+	r.Engine().Static("/uploads", c.Config.Storage.Local.BasePath)
 
 	// Start server
 	addr := fmt.Sprintf(":%d", c.Config.Server.Port)

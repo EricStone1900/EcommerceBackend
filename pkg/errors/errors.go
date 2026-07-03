@@ -24,6 +24,11 @@ const (
 	CodeUserNotFound       = 3001
 	CodeEmailAlreadyExists = 3002
 	CodeInvalidCredentials = 3003
+	CodeProductNotFound    = 4004
+	CodeFileTooLarge       = 6001
+	CodeInvalidFileType    = 6002
+	CodeFileNotFound       = 6003
+	CodeFileUploadFailed   = 6004
 	CodeInternalError      = 5001
 )
 
@@ -37,6 +42,11 @@ var (
 	ErrUserNotFound       = &Error{Code: CodeUserNotFound, Message: "user not found", HTTPCode: 404}
 	ErrEmailAlreadyExists = &Error{Code: CodeEmailAlreadyExists, Message: "email already registered", HTTPCode: 409}
 	ErrInvalidCredentials = &Error{Code: CodeInvalidCredentials, Message: "invalid email or password", HTTPCode: 401}
+	ErrProductNotFound    = &Error{Code: CodeProductNotFound, Message: "product not found", HTTPCode: 404}
+	ErrFileTooLarge       = &Error{Code: CodeFileTooLarge, Message: "file size exceeds limit", HTTPCode: 413}
+	ErrInvalidFileType    = &Error{Code: CodeInvalidFileType, Message: "invalid file type or extension", HTTPCode: 400}
+	ErrFileNotFound       = &Error{Code: CodeFileNotFound, Message: "file not found", HTTPCode: 404}
+	ErrFileUploadFailed   = &Error{Code: CodeFileUploadFailed, Message: "file upload failed", HTTPCode: 500}
 	ErrInternalError      = &Error{Code: CodeInternalError, Message: "internal server error", HTTPCode: 500}
 )
 

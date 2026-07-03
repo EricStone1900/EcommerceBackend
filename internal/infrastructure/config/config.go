@@ -52,8 +52,14 @@ type JWTConfig struct {
 
 // StorageConfig holds file storage configuration.
 type StorageConfig struct {
-	Driver string   `mapstructure:"driver"`
-	S3     S3Config `mapstructure:"s3"`
+	Driver string              `mapstructure:"driver"`
+	Local  LocalStorageConfig  `mapstructure:"local"`
+	S3     S3Config            `mapstructure:"s3"`
+}
+
+// LocalStorageConfig holds local disk storage configuration.
+type LocalStorageConfig struct {
+	BasePath string `mapstructure:"base_path"`
 }
 
 // S3Config holds S3-compatible storage configuration.
@@ -120,6 +126,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("jwt.access_expire", "15m")
 	v.SetDefault("jwt.refresh_expire", "168h")
 	v.SetDefault("storage.driver", "local")
+	v.SetDefault("storage.local.base_path", "./uploads")
 	v.SetDefault("storage.s3.region", "us-east-1")
 }
 
